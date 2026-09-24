@@ -1,6 +1,6 @@
 # Serverless URL Shortener
 
-A small, production-minded URL-shortening API built on AWS serverless services and deployed with Terraform.
+A small, production-minded URL shortener with a live web interface, built on AWS serverless services and deployed with Terraform.
 
 ## Project structure
 
@@ -16,19 +16,16 @@ A small, production-minded URL-shortening API built on AWS serverless services a
 ## Architecture
 
 ```text
-POST /shorten               GET /{slug}
-      |                           |
-      v                           v
-API Gateway HTTP API        API Gateway HTTP API
-      |                           |
-      v                           v
-Shorten Lambda              Redirect Lambda
-      |                           |
-      +-------> DynamoDB <--------+
+GET /                 POST /shorten             GET /{slug}
+  |                          |                         |
+  v                          v                         v
+Frontend Lambda        Shorten Lambda             Redirect Lambda
+                             |                         |
+                             +-----> DynamoDB <--------+
 ```
 
-- **API Gateway HTTP API** exposes the public routes and applies request throttling.
-- **AWS Lambda** validates requests, creates collision-safe slugs, and handles redirects.
+- **API Gateway HTTP API** exposes the web interface and API routes with request throttling.
+- **AWS Lambda** serves the interface, validates requests, creates collision-safe slugs, and handles redirects.
 - **DynamoDB** stores each slug-to-URL mapping using on-demand billing.
 - **CloudWatch Logs** stores Lambda logs for 14 days.
 - **Terraform** provisions and tracks the entire AWS stack.
@@ -37,8 +34,15 @@ Shorten Lambda              Redirect Lambda
 
 | Method | Route | Description |
 | --- | --- | --- |
+| `GET` | `/` | Serve the browser-based project demonstration. |
 | `POST` | `/shorten` | Validate a URL, persist it, and return a short URL. |
 | `GET` | `/{slug}` | Return an HTTP `302` redirect to the stored URL. |
+
+After deployment, open the `demo_url` output in a browser to use the graphical interface:
+
+```bash
+open "$(terraform -chdir=terraform output -raw demo_url)"
+```
 
 Example request:
 
@@ -148,4 +152,4 @@ terraform destroy
 
 ## Scope and possible extensions
 
-This repository currently provides an API rather than a graphical frontend. Natural extensions include a static web interface, a custom domain with TLS, expiring links through DynamoDB TTL, click analytics, and CI/CD deployment from GitHub Actions.
+Natural extensions include a custom domain, expiring links through DynamoDB TTL, click analytics, automated tests, and CI/CD deployment from GitHub Actions.
