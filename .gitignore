@@ -3,6 +3,8 @@
 **/*.tfstate
 **/*.tfstate.*
 **/*.tfplan
+**/*.tfvars
+**/*.tfvars.json
 **/crash.log
 **/override.tf
 **/override.tf.json
@@ -13,7 +15,7 @@
 !**/.terraform.lock.hcl
 
 # Generated Lambda deployment archives
-serverless-url-shortner/lambda/*.zip
+lambda/*.zip
 
 # Python caches
 **/__pycache__/
@@ -21,3 +23,9 @@ serverless-url-shortner/lambda/*.zip
 
 # macOS
 .DS_Store
+
+# Local secrets and generated repository bundles
+.env
+.env.*
+!.env.example
+repomix-output.*

@@ -2,6 +2,17 @@
 
 A small, production-minded URL-shortening API built on AWS serverless services and deployed with Terraform.
 
+## Project structure
+
+```text
+.
+├── lambda/       # Python Lambda handlers
+├── scripts/      # Lambda packaging script
+├── terraform/    # AWS infrastructure as code
+├── .gitignore
+└── README.md
+```
+
 ## Architecture
 
 ```text
@@ -76,7 +87,6 @@ aws sts get-caller-identity
 Package both Lambda functions:
 
 ```bash
-cd serverless-url-shortner
 bash scripts/deploy.sh
 ```
 
@@ -107,7 +117,7 @@ SHORT_URL="$(curl -sS -X POST "$API_URL/shorten" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["short_url"])')"
 
 echo "$SHORT_URL"
-curl -I "$SHORT_URL"
+curl -sS -o /dev/null -D - "$SHORT_URL"
 ```
 
 ## Configuration
@@ -139,4 +149,3 @@ terraform destroy
 ## Scope and possible extensions
 
 This repository currently provides an API rather than a graphical frontend. Natural extensions include a static web interface, a custom domain with TLS, expiring links through DynamoDB TTL, click analytics, and CI/CD deployment from GitHub Actions.
-# serverless-url-shortner
