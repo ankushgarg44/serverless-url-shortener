@@ -1,0 +1,23 @@
+# Terraform working data and local state
+**/.terraform/*
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Keep the dependency lock file in version control.
+!**/.terraform.lock.hcl
+
+# Generated Lambda deployment archives
+serverless-url-shortner/lambda/*.zip
+
+# Python caches
+**/__pycache__/
+**/*.py[cod]
+
+# macOS
+.DS_Store
