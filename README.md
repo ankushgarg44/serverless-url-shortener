@@ -155,6 +155,19 @@ pytest tests/api -m api -v
 The live suite checks the frontend, URL creation, redirects, validation, and
 missing slugs. It creates one small URL record in DynamoDB per run.
 
+## Continuous integration
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs automatically on
+every push and pull request. It performs two independent checks:
+
+- installs the pinned Python dependencies and runs the unit tests;
+- packages the Lambda functions, checks Terraform formatting, and runs
+  `terraform validate`.
+
+The workflow can also be started manually from **GitHub → Actions → CI → Run
+workflow**. It does not deploy infrastructure, use AWS credentials, or run the
+live API tests.
+
 ## Configuration
 
 Terraform variables and their defaults are in `terraform/variables.tf`:
