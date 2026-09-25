@@ -11,11 +11,17 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ.get('TABLE_NAME', 'url-shortener-table'))
-
 MAX_URL_LENGTH = 2048
 MAX_SLUG_ATTEMPTS = 5
+_table = None
+
+
+def get_table():
+    global _table
+    if _table is None:
+        dynamodb = boto3.resource('dynamodb')
+        _table = dynamodb.Table(os.environ.get('TABLE_NAME', 'url-shortener-table'))
+    return _table
 
 
 def json_response(status_code, payload):
@@ -49,7 +55,7 @@ def create_slug(original_url):
     for _ in range(MAX_SLUG_ATTEMPTS):
         slug = secrets.token_urlsafe(6)
         try:
-            table.put_item(
+            get_table().put_item(
                 Item={'slug': slug, 'url': original_url},
                 ConditionExpression='attribute_not_exists(slug)',
             )
@@ -73,16 +79,16 @@ def lambda_handler(event, context):
             'error': 'url must be a valid http or https URL with no credentials'
         })
 
-    try:
-        slug = create_slug(original_url)
-    except (ClientError, RuntimeError):
-        logger.exception('Failed to create shortened URL')
-        return json_response(500, {'error': 'Unable to shorten URL'})
-
     request_context = event.get('requestContext') or {}
     domain = request_context.get('domainName') or (event.get('headers') or {}).get('host')
     if not domain:
         logger.error('API Gateway domain was missing from the request')
         return json_response(500, {'error': 'Unable to build shortened URL'})
+
+    try:
+        slug = create_slug(original_url)
+    except (ClientError, RuntimeError):
+        logger.exception('Failed to create shortened URL')
+        return json_response(500, {'error': 'Unable to shorten URL'})
 
     return json_response(201, {'short_url': f'https://{domain}/{slug}'})

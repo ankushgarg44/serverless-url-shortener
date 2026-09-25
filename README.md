@@ -8,7 +8,10 @@ A small, production-minded URL shortener with a live web interface, built on AWS
 .
 ├── lambda/       # Python Lambda handlers
 ├── scripts/      # Lambda packaging script
+├── tests/        # Unit tests and opt-in live API tests
 ├── terraform/    # AWS infrastructure as code
+├── pytest.ini
+├── requirements-dev.txt
 ├── .gitignore
 └── README.md
 ```
@@ -69,6 +72,7 @@ Example response:
 - Lambda execution logs are enabled and automatically expire after 14 days.
 - API Gateway is throttled to a configurable rate and burst limit.
 - Lambda deployment hashes ensure Terraform publishes updated code archives.
+- Unit tests mock DynamoDB; end-to-end tests verify the deployed API over HTTPS.
 - Terraform state, generated ZIP files, and Python caches are excluded from Git.
 
 ## Prerequisites
@@ -124,6 +128,33 @@ echo "$SHORT_URL"
 curl -sS -o /dev/null -D - "$SHORT_URL"
 ```
 
+## Tests
+
+Create an isolated Python environment and install the development dependencies:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+```
+
+Run the fast unit test suite. The deployed API tests skip automatically when
+`API_URL` is not set:
+
+```bash
+pytest
+```
+
+Run only the end-to-end tests against the currently deployed stack:
+
+```bash
+export API_URL="$(terraform -chdir=terraform output -raw api_endpoint)"
+pytest tests/api -m api -v
+```
+
+The live suite checks the frontend, URL creation, redirects, validation, and
+missing slugs. It creates one small URL record in DynamoDB per run.
+
 ## Configuration
 
 Terraform variables and their defaults are in `terraform/variables.tf`:
@@ -152,4 +183,4 @@ terraform destroy
 
 ## Scope and possible extensions
 
-Natural extensions include a custom domain, expiring links through DynamoDB TTL, click analytics, automated tests, and CI/CD deployment from GitHub Actions.
+Natural extensions include a custom domain, expiring links through DynamoDB TTL, click analytics, and CI/CD deployment from GitHub Actions.

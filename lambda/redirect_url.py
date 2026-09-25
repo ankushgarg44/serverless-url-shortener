@@ -10,10 +10,16 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ.get('TABLE_NAME', 'url-shortener-table'))
-
 SLUG_PATTERN = re.compile(r'^[A-Za-z0-9_-]{6,32}$')
+_table = None
+
+
+def get_table():
+    global _table
+    if _table is None:
+        dynamodb = boto3.resource('dynamodb')
+        _table = dynamodb.Table(os.environ.get('TABLE_NAME', 'url-shortener-table'))
+    return _table
 
 
 def json_response(status_code, payload):
@@ -30,7 +36,7 @@ def lambda_handler(event, context):
         return json_response(400, {'error': 'Invalid short URL'})
 
     try:
-        response = table.get_item(Key={'slug': slug}, ConsistentRead=True)
+        response = get_table().get_item(Key={'slug': slug}, ConsistentRead=True)
     except ClientError:
         logger.exception('Failed to retrieve shortened URL')
         return json_response(500, {'error': 'Unable to retrieve URL'})
